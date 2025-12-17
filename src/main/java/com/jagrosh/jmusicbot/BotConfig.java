@@ -108,7 +108,7 @@ public class BotConfig
             {
                 token = prompt.prompt("Please provide a bot token."
                         + "\nInstructions for obtaining a token can be found here:"
-                        + "\nhttps://github.com/jagrosh/MusicBot/wiki/Getting-a-Bot-Token."
+                        + "\nhttps://github.com/abdmohrat/MusicBot/wiki/Getting-a-Bot-Token."
                         + "\nBot Token: ");
                 if(token==null)
                 {
@@ -129,7 +129,7 @@ public class BotConfig
                     owner = Long.parseLong(prompt.prompt("Owner ID was missing, or the provided owner ID is not valid."
                         + "\nPlease provide the User ID of the bot's owner."
                         + "\nInstructions for obtaining your User ID can be found here:"
-                        + "\nhttps://github.com/jagrosh/MusicBot/wiki/Finding-Your-User-ID"
+                        + "\nhttps://github.com/abdmohrat/MusicBot/wiki/Finding-Your-User-ID"
                         + "\nOwner User ID: "));
                 }
                 catch(NumberFormatException | NullPointerException ex)
