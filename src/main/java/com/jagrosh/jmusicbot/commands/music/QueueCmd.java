@@ -16,9 +16,7 @@
 package com.jagrosh.jmusicbot.commands.music;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.jdautilities.menu.Paginator;
 import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.audio.QueuedTrack;
@@ -28,10 +26,7 @@ import com.jagrosh.jmusicbot.settings.RepeatMode;
 import com.jagrosh.jmusicbot.settings.Settings;
 import com.jagrosh.jmusicbot.utils.FormatUtil;
 import com.jagrosh.jmusicbot.utils.TimeUtil;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.exceptions.PermissionException;
 
 /**
  *
@@ -39,8 +34,6 @@ import net.dv8tion.jda.api.exceptions.PermissionException;
  */
 public class QueueCmd extends MusicCommand 
 {
-    private final Paginator.Builder builder;
-    
     public QueueCmd(Bot bot)
     {
         super(bot);
@@ -49,17 +42,7 @@ public class QueueCmd extends MusicCommand
         this.arguments = "[pagenum]";
         this.aliases = bot.getConfig().getAliases(this.name);
         this.bePlaying = true;
-        this.botPermissions = new Permission[]{Permission.MESSAGE_ADD_REACTION,Permission.MESSAGE_EMBED_LINKS};
-        builder = new Paginator.Builder()
-                .setColumns(1)
-                .setFinalAction(m -> {try{m.clearReactions().queue();}catch(PermissionException ignore){}})
-                .setItemsPerPage(10)
-                .waitOnSinglePage(false)
-                .useNumberedItems(true)
-                .showPageNumbers(true)
-                .wrapPageEnds(true)
-                .setEventWaiter(bot.getWaiter())
-                .setTimeout(1, TimeUnit.MINUTES);
+        this.botPermissions = new Permission[]{Permission.MESSAGE_EMBED_LINKS};
     }
 
     @Override
@@ -75,33 +58,33 @@ public class QueueCmd extends MusicCommand
         List<QueuedTrack> list = ah.getQueue().getList();
         if(list.isEmpty())
         {
-            Message nowp = ah.getNowPlaying(event.getJDA());
-            Message nonowp = ah.getNoMusicPlaying(event.getJDA());
-            Message built = new MessageBuilder()
-                    .setContent(event.getClient().getWarning() + " There is no music in the queue!")
-                    .setEmbeds((nowp==null ? nonowp : nowp).getEmbeds().get(0)).build();
-            event.reply(built, m -> 
-            {
-                if(nowp!=null)
-                    bot.getNowplayingHandler().setLastNPMessage(m);
-            });
+            event.reply(event.getClient().getWarning() + " There is no music in the queue!");
             return;
         }
-        String[] songs = new String[list.size()];
+
         long total = 0;
-        for(int i=0; i<list.size(); i++)
+        for(QueuedTrack qt : list)
         {
-            total += list.get(i).getTrack().getDuration();
-            songs[i] = list.get(i).toString();
+            total += qt.getTrack().getDuration();
         }
         Settings settings = event.getClient().getSettingsFor(event.getGuild());
-        long fintotal = total;
-        builder.setText((i1,i2) -> getQueueTitle(ah, event.getClient().getSuccess(), songs.length, fintotal, settings.getRepeatMode(), settings.getQueueType()))
-                .setItems(songs)
-                .setUsers(event.getAuthor())
-                .setColor(event.getSelfMember().getColor())
-                ;
-        builder.build().paginate(event.getChannel(), pagenum);
+
+        int itemsPerPage = 10;
+        int pages = (int)Math.ceil(list.size() / (double)itemsPerPage);
+        if(pagenum < 1) pagenum = 1;
+        if(pagenum > pages) pagenum = pages;
+
+        int start = (pagenum - 1) * itemsPerPage;
+        int end = Math.min(start + itemsPerPage, list.size());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(getQueueTitle(ah, event.getClient().getSuccess(), list.size(), total, settings.getRepeatMode(), settings.getQueueType()));
+        sb.append("\n").append("Page ").append(pagenum).append("/").append(pages).append("\n");
+        for(int i=start; i<end; i++)
+        {
+            sb.append('`').append(i+1).append("` ").append(FormatUtil.filter(list.get(i).toString())).append("\n");
+        }
+        event.reply(sb.toString());
     }
     
     private String getQueueTitle(AudioHandler ah, String success, int songslength, long total, RepeatMode repeatmode, QueueType queueType)

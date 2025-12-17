@@ -17,7 +17,6 @@ package com.jagrosh.jmusicbot.commands.dj;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.commons.utils.FinderUtil;
-import com.jagrosh.jdautilities.menu.OrderedMenu;
 import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.commands.DJCommand;
@@ -25,6 +24,7 @@ import com.jagrosh.jmusicbot.utils.FormatUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -74,26 +74,46 @@ public class ForceRemoveCmd extends DJCommand
         }
         else if(found.size()>1)
         {
-            OrderedMenu.Builder builder = new OrderedMenu.Builder();
-            for(int i=0; i<found.size() && i<4; i++)
+            int max = Math.min(4, found.size());
+            StringBuilder sb = new StringBuilder();
+            sb.append(event.getClient().getWarning()).append(" Found multiple users:\n");
+            for(int i=0; i<max; i++)
             {
                 Member member = found.get(i);
-                builder.addChoice("**"+member.getUser().getName()+"**#"+member.getUser().getDiscriminator());
+                sb.append("`").append(i+1).append("` **")
+                        .append(FormatUtil.filter(member.getUser().getName()))
+                        .append("**#").append(member.getUser().getDiscriminator())
+                        .append("\n");
             }
+            sb.append("\nType a number `1-").append(max).append("` to select, or `cancel`.");
 
-            builder
-            .setSelection((msg, i) -> removeAllEntries(found.get(i-1).getUser(), event))
-            .setText("Found multiple users:")
-            .setColor(event.getSelfMember().getColor())
-            .useNumbers()
-            .setUsers(event.getAuthor())
-            .useCancelButton(true)
-            .setCancel((msg) -> {})
-            .setEventWaiter(bot.getWaiter())
-            .setTimeout(1, TimeUnit.MINUTES)
+            event.reply(sb.toString());
 
-            .build().display(event.getChannel());
-
+            bot.getWaiter().waitForEvent(
+                    MessageReceivedEvent.class,
+                    e -> !e.getAuthor().isBot()
+                            && e.getAuthor().equals(event.getAuthor())
+                            && e.getChannel().equals(event.getChannel()),
+                    e -> {
+                        String content = e.getMessage().getContentRaw().trim();
+                        if(content.equalsIgnoreCase("cancel"))
+                            return;
+                        int selection;
+                        try
+                        {
+                            selection = Integer.parseInt(content);
+                        }
+                        catch(NumberFormatException ex)
+                        {
+                            return;
+                        }
+                        if(selection < 1 || selection > max)
+                            return;
+                        removeAllEntries(found.get(selection - 1).getUser(), event);
+                    },
+                    1, TimeUnit.MINUTES,
+                    () -> {}
+            );
             return;
         }
         else

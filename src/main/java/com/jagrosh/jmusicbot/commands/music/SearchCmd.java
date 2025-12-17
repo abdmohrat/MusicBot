@@ -24,7 +24,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import java.util.concurrent.TimeUnit;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.jdautilities.menu.OrderedMenu;
 import com.jagrosh.jmusicbot.Bot;
 import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.audio.QueuedTrack;
@@ -32,6 +31,7 @@ import com.jagrosh.jmusicbot.commands.MusicCommand;
 import com.jagrosh.jmusicbot.utils.FormatUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 /**
  *
@@ -40,7 +40,6 @@ import net.dv8tion.jda.api.entities.Message;
 public class SearchCmd extends MusicCommand 
 {
     protected String searchPrefix = "ytsearch:";
-    private final OrderedMenu.Builder builder;
     private final String searchingEmoji;
     
     public SearchCmd(Bot bot)
@@ -54,12 +53,6 @@ public class SearchCmd extends MusicCommand
         this.beListening = true;
         this.bePlaying = false;
         this.botPermissions = new Permission[]{Permission.MESSAGE_EMBED_LINKS};
-        builder = new OrderedMenu.Builder()
-                .allowTextInput(true)
-                .useNumbers()
-                .useCancelButton(true)
-                .setEventWaiter(bot.getWaiter())
-                .setTimeout(1, TimeUnit.MINUTES);
     }
     @Override
     public void doCommand(CommandEvent event) 
@@ -103,33 +96,66 @@ public class SearchCmd extends MusicCommand
         @Override
         public void playlistLoaded(AudioPlaylist playlist)
         {
-            builder.setColor(event.getSelfMember().getColor())
-                    .setText(FormatUtil.filter(event.getClient().getSuccess()+" Search results for `"+event.getArgs()+"`:"))
-                    .setChoices(new String[0])
-                    .setSelection((msg,i) -> 
-                    {
-                        AudioTrack track = playlist.getTracks().get(i-1);
+            int max = Math.min(4, playlist.getTracks().size());
+            if(max == 0)
+            {
+                m.editMessage(FormatUtil.filter(event.getClient().getWarning()+" No results found for `"+event.getArgs()+"`.")).queue();
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(FormatUtil.filter(event.getClient().getSuccess()+" Search results for `"+event.getArgs()+"`:")).append("\n");
+            for(int i=0; i<max; i++)
+            {
+                AudioTrack track = playlist.getTracks().get(i);
+                sb.append("`").append(i+1).append("` ")
+                        .append("`[").append(TimeUtil.formatTime(track.getDuration())).append("]` ")
+                        .append("**").append(FormatUtil.filter(track.getInfo().title)).append("**\n");
+            }
+            sb.append("\nType a number `1-").append(max).append("` to select, or `cancel`.");
+
+            m.editMessage(sb.toString()).queue();
+
+            bot.getWaiter().waitForEvent(
+                    MessageReceivedEvent.class,
+                    e -> !e.getAuthor().isBot()
+                            && e.getAuthor().equals(event.getAuthor())
+                            && e.getChannel().equals(event.getChannel()),
+                    e -> {
+                        String content = e.getMessage().getContentRaw().trim();
+                        if(content.equalsIgnoreCase("cancel"))
+                        {
+                            m.editMessage(FormatUtil.filter(event.getClient().getWarning()+" Search cancelled.")).queue();
+                            return;
+                        }
+                        int selection;
+                        try
+                        {
+                            selection = Integer.parseInt(content);
+                        }
+                        catch(NumberFormatException ex)
+                        {
+                            return;
+                        }
+                        if(selection < 1 || selection > max)
+                            return;
+
+                        AudioTrack track = playlist.getTracks().get(selection - 1);
                         if(bot.getConfig().isTooLong(track))
                         {
-                            event.replyWarning("This track (**"+track.getInfo().title+"**) is longer than the allowed maximum: `"
-                                    + TimeUtil.formatTime(track.getDuration())+"` > `"+bot.getConfig().getMaxTime()+"`");
+                            m.editMessage(FormatUtil.filter(event.getClient().getWarning()+" This track (**"+track.getInfo().title+"**) is longer than the allowed maximum: `"
+                                    + TimeUtil.formatTime(track.getDuration())+"` > `"+bot.getConfig().getMaxTime()+"`")).queue();
                             return;
                         }
                         AudioHandler handler = (AudioHandler)event.getGuild().getAudioManager().getSendingHandler();
                         int pos = handler.addTrack(new QueuedTrack(track, RequestMetadata.fromResultHandler(track, event)))+1;
-                        event.replySuccess("Added **" + FormatUtil.filter(track.getInfo().title)
-                                + "** (`" + TimeUtil.formatTime(track.getDuration()) + "`) " + (pos==0 ? "to begin playing" 
-                                    : " to the queue at position "+pos));
-                    })
-                    .setCancel((msg) -> {})
-                    .setUsers(event.getAuthor())
-                    ;
-            for(int i=0; i<4 && i<playlist.getTracks().size(); i++)
-            {
-                AudioTrack track = playlist.getTracks().get(i);
-                builder.addChoices("`["+ TimeUtil.formatTime(track.getDuration())+"]` [**"+track.getInfo().title+"**]("+track.getInfo().uri+")");
-            }
-            builder.build().display(m);
+                        m.editMessage(FormatUtil.filter(event.getClient().getSuccess()+" Added **" + track.getInfo().title
+                                + "** (`" + TimeUtil.formatTime(track.getDuration()) + "`) " + (pos==0 ? "to begin playing"
+                                : " to the queue at position "+pos))).queue();
+                    },
+                    1, TimeUnit.MINUTES,
+                    () -> m.editMessage(FormatUtil.filter(event.getClient().getWarning()+" Search timed out.")).queue()
+            );
         }
 
         @Override
