@@ -40,7 +40,7 @@ import org.json.JSONTokener;
  */
 public class OtherUtil
 {
-    public final static String NEW_VERSION_AVAILABLE = "There is a new version of JMusicBot available!\n"
+    public final static String NEW_VERSION_AVAILABLE = "There is a new version of MusicBot available!\n"
                     + "Current version: %s\n"
                     + "New Version: %s\n\n"
                     + "Please visit https://github.com/abdmohrat/MusicBot/releases/latest to get the latest release.";
@@ -171,7 +171,7 @@ public class OtherUtil
         
         if(latestVersion!=null && !latestVersion.equals(version))
         {
-            prompt.alert(Prompt.Level.WARNING, "JMusicBot Version", String.format(NEW_VERSION_AVAILABLE, version, latestVersion));
+            prompt.alert(Prompt.Level.WARNING, "MusicBot Version", String.format(NEW_VERSION_AVAILABLE, version, latestVersion));
         }
     }
     

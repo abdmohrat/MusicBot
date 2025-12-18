@@ -70,7 +70,7 @@ public class JMusicBot
     private static void startBot()
     {
         // create prompt to handle startup
-        Prompt prompt = new Prompt("JMusicBot");
+        Prompt prompt = new Prompt("MusicBot");
         
         // startup checks
         OtherUtil.checkVersion(prompt);
@@ -130,7 +130,7 @@ public class JMusicBot
             String unsupportedReason = OtherUtil.getUnsupportedBotReason(jda);
             if (unsupportedReason != null)
             {
-                prompt.alert(Prompt.Level.ERROR, "JMusicBot", "JMusicBot cannot be run on this Discord bot: " + unsupportedReason);
+                prompt.alert(Prompt.Level.ERROR, "MusicBot", "MusicBot cannot be run on this Discord bot: " + unsupportedReason);
                 try{ Thread.sleep(5000);}catch(InterruptedException ignored){} // this is awful but until we have a better way...
                 jda.shutdown();
                 System.exit(1);
@@ -141,20 +141,20 @@ public class JMusicBot
             // message content intent
             if(!"@mention".equals(config.getPrefix()))
             {
-                LOG.info("JMusicBot", "You currently have a custom prefix set. "
+                LOG.info("MusicBot", "You currently have a custom prefix set. "
                         + "If your prefix is not working, make sure that the 'MESSAGE CONTENT INTENT' is Enabled "
                         + "on https://discord.com/developers/applications/" + jda.getSelfUser().getId() + "/bot");
             }
         }
         catch(IllegalArgumentException ex)
         {
-            prompt.alert(Prompt.Level.ERROR, "JMusicBot", "Some aspect of the configuration is "
+            prompt.alert(Prompt.Level.ERROR, "MusicBot", "Some aspect of the configuration is "
                     + "invalid: " + ex + "\nConfig Location: " + config.getConfigLocation());
             System.exit(1);
         }
         catch(ErrorResponseException ex)
         {
-            prompt.alert(Prompt.Level.ERROR, "JMusicBot", ex + "\nInvalid reponse returned when "
+            prompt.alert(Prompt.Level.ERROR, "MusicBot", ex + "\nInvalid reponse returned when "
                     + "attempting to connect, please make sure you're connected to the internet");
             System.exit(1);
         }
