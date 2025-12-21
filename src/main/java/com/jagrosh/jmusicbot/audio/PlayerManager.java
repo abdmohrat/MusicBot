@@ -39,6 +39,7 @@ import net.dv8tion.jda.api.entities.Guild;
 public class PlayerManager extends DefaultAudioPlayerManager
 {
     private final Bot bot;
+    private YoutubeAudioSourceManager youtube;
     
     public PlayerManager(Bot bot)
     {
@@ -49,9 +50,11 @@ public class PlayerManager extends DefaultAudioPlayerManager
     {
         TransformativeAudioSourceManager.createTransforms(bot.getConfig().getTransforms()).forEach(t -> registerSourceManager(t));
 
-        YoutubeAudioSourceManager yt = new YoutubeAudioSourceManager(true);
-        yt.setPlaylistPageCount(bot.getConfig().getMaxYTPlaylistPages());
-        registerSourceManager(yt);
+        youtube = new YoutubeAudioSourceManager(true);
+        youtube.setPlaylistPageCount(bot.getConfig().getMaxYTPlaylistPages());
+        if(bot.getConfig().useYoutubeOauth2())
+            youtube.useOauth2(bot.getConfig().getYoutubeOauth2RefreshToken(), true);
+        registerSourceManager(youtube);
 
         registerSourceManager(SoundCloudAudioSourceManager.createDefault());
         registerSourceManager(new BandcampAudioSourceManager());
@@ -70,6 +73,11 @@ public class PlayerManager extends DefaultAudioPlayerManager
     public Bot getBot()
     {
         return bot;
+    }
+
+    public YoutubeAudioSourceManager getYoutubeSourceManager()
+    {
+        return youtube;
     }
     
     public boolean hasHandler(Guild guild)

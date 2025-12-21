@@ -21,8 +21,11 @@ import com.jagrosh.jmusicbot.utils.TimeUtil;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.typesafe.config.*;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 
@@ -43,6 +46,8 @@ public class BotConfig
             successEmoji, warningEmoji, errorEmoji, loadingEmoji, searchingEmoji,
             evalEngine;
     private boolean stayInChannel, songInGame, npImages, updatealerts, useEval, dbots;
+    private boolean youtubeOauthEnabled;
+    private String youtubeOauthRefreshToken;
     private long owner, maxSeconds, aloneTimeUntilStop;
     private int maxYTPlaylistPages;
     private double skipratio;
@@ -88,6 +93,8 @@ public class BotConfig
             songInGame = config.getBoolean("songinstatus");
             npImages = config.getBoolean("npimages");
             updatealerts = config.getBoolean("updatealerts");
+            youtubeOauthEnabled = config.getBoolean("youtube.oauth2.enabled");
+            youtubeOauthRefreshToken = config.getString("youtube.oauth2.refreshToken");
             logLevel = config.getString("loglevel");
             useEval = config.getBoolean("eval");
             evalEngine = config.getString("evalengine");
@@ -316,6 +323,75 @@ public class BotConfig
     public boolean useUpdateAlerts()
     {
         return updatealerts;
+    }
+
+    public boolean useYoutubeOauth2()
+    {
+        return youtubeOauthEnabled
+                && youtubeOauthRefreshToken != null
+                && !youtubeOauthRefreshToken.trim().isEmpty();
+    }
+
+    public String getYoutubeOauth2RefreshToken()
+    {
+        return youtubeOauthRefreshToken;
+    }
+
+    public synchronized void persistYoutubeOauth2RefreshToken(String refreshToken) throws IOException
+    {
+        if(refreshToken == null || refreshToken.trim().isEmpty())
+            throw new IllegalArgumentException("Refresh token cannot be empty");
+        if(path == null)
+            throw new IOException("Config path not loaded yet");
+
+        String original = Files.readString(path, StandardCharsets.UTF_8);
+        String newline = original.contains("\r\n") ? "\r\n" : "\n";
+
+        String escapedToken = escapeConfigString(refreshToken.trim());
+        String updated = original;
+
+        updated = upsertConfigLine(updated, "youtube\\.oauth2\\.enabled", "true");
+        updated = upsertConfigLine(updated, "youtube\\.oauth2\\.refreshToken", "\"" + escapedToken + "\"");
+
+        if(updated.equals(original))
+        {
+            // nothing changed; still update in-memory copy
+            youtubeOauthEnabled = true;
+            youtubeOauthRefreshToken = refreshToken.trim();
+            return;
+        }
+
+        Files.writeString(path, updated, StandardCharsets.UTF_8);
+        ConfigFactory.invalidateCaches();
+
+        youtubeOauthEnabled = true;
+        youtubeOauthRefreshToken = refreshToken.trim();
+    }
+
+    private static String escapeConfigString(String value)
+    {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private String upsertConfigLine(String content, String keyRegex, String value)
+    {
+        Pattern p = Pattern.compile("(?m)^(\\s*" + keyRegex + "\\s*=\\s*).*$");
+        Matcher m = p.matcher(content);
+        if(m.find())
+            return m.replaceAll("$1" + Matcher.quoteReplacement(value));
+
+        // insert before END_TOKEN if available; otherwise append
+        int idx = content.indexOf(END_TOKEN);
+        String newline = content.contains("\r\n") ? "\r\n" : "\n";
+        String line = keyRegex.replace("\\.", ".") + " = " + value;
+        if(idx >= 0)
+        {
+            String before = content.substring(0, idx);
+            if(!before.endsWith("\n") && !before.endsWith("\r"))
+                before += newline;
+            return before + line + newline + content.substring(idx);
+        }
+        return content + (content.endsWith(newline) ? "" : newline) + line + newline;
     }
 
     public String getLogLevel()

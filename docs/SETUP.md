@@ -31,6 +31,15 @@ Create or edit `config.txt` next to the jar:
 
 Tip: Set `updatealerts = false` if you don’t want update messages.
 
+### YouTube age-restricted content (optional)
+
+Some YouTube / YouTube Music tracks are age-restricted and won't play without authentication.
+
+- Run the owner command `!auth` and follow the DM instructions (use a burner/secondary Google account).
+- The bot will store a refresh token in `config.txt` under:
+  - `youtube.oauth2.enabled = true`
+  - `youtube.oauth2.refreshToken = "<token>"`
+
 ## 5) Run
 
 From the folder with the jar:
@@ -50,4 +59,3 @@ Commands:
 
 - List playlists: `!playlists`
 - Play playlist: `!play playlist <name>` (or `!play pl <name>`)
-
