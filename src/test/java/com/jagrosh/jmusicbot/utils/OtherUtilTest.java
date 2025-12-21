@@ -30,5 +30,11 @@ public class OtherUtilTest
         assertEquals("version", OtherUtil.normalizeVersion("version"));
         assertEquals("vNext", OtherUtil.normalizeVersion("vNext"));
     }
-}
 
+    @Test
+    public void testIsNewVersionAvailable_handlesVPrefix()
+    {
+        assertFalse(OtherUtil.isNewVersionAvailable("0.4.6.1", "v0.4.6.1"));
+        assertTrue(OtherUtil.isNewVersionAvailable("0.4.6", "v0.4.6.1"));
+    }
+}

@@ -169,13 +169,17 @@ public class OtherUtil
         // Check for new version
         String latestVersion = getLatestVersion();
         
-        String normalizedVersion = normalizeVersion(version);
-        String normalizedLatestVersion = normalizeVersion(latestVersion);
-        
-        if(normalizedLatestVersion!=null && normalizedVersion!=null && !normalizedLatestVersion.equals(normalizedVersion))
+        if(isNewVersionAvailable(version, latestVersion))
         {
             prompt.alert(Prompt.Level.WARNING, "MusicBot Version", String.format(NEW_VERSION_AVAILABLE, version, latestVersion));
         }
+    }
+    
+    public static boolean isNewVersionAvailable(String currentVersion, String latestVersion)
+    {
+        String normalizedCurrent = normalizeVersion(currentVersion);
+        String normalizedLatest = normalizeVersion(latestVersion);
+        return normalizedLatest!=null && normalizedCurrent!=null && !normalizedLatest.equalsIgnoreCase(normalizedCurrent);
     }
     
     static String normalizeVersion(String version)
