@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.http.YoutubeOauth2Handler;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AuthCmd extends OwnerCommand
@@ -71,13 +72,43 @@ public class AuthCmd extends OwnerCommand
                     pc.sendMessage("Go to: `" + url + "`\nEnter code: `" + userCode + "`").queue();
                     pc.sendMessage("Waiting for you to complete authorization...").queue();
 
-                    // This call blocks and internally polls until authorized (or canceled/expired).
-                    oauth.fetchRefreshToken(deviceCode);
+                    long intervalSeconds = device.get("interval").asLong(5);
+                    long expiresInSeconds = device.get("expires_in").asLong(600);
+                    long intervalMillis = Math.max(1000L, intervalSeconds * 1000L);
+                    long deadline = System.currentTimeMillis() + Math.max(30_000L, Math.min(TimeUnit.MINUTES.toMillis(10), expiresInSeconds * 1000L));
 
-                    String refreshToken = oauth.getRefreshToken();
+                    String refreshToken = null;
+                    while(System.currentTimeMillis() < deadline)
+                    {
+                        try
+                        {
+                            JsonBrowser tokenResponse = oauth.fetchRefreshToken(deviceCode);
+                            refreshToken = tokenResponse.get("refresh_token").text();
+                            if(refreshToken != null && !refreshToken.trim().isEmpty())
+                                break;
+                        }
+                        catch(IOException ignored)
+                        {
+                            // Usually "authorization_pending" until the user completes the flow.
+                        }
+                        catch(Exception ignored)
+                        {
+                            // Keep polling until deadline; we'll report timeout if it never succeeds.
+                        }
+
+                        try
+                        {
+                            Thread.sleep(intervalMillis);
+                        }
+                        catch(InterruptedException ignored)
+                        {
+                            break;
+                        }
+                    }
+
                     if(refreshToken == null || refreshToken.trim().isEmpty())
                     {
-                        pc.sendMessage("OAuth2 linking did not return a refresh token. It may have been denied or expired. Run `!auth` again.").queue();
+                        pc.sendMessage("OAuth2 linking timed out (or was denied). Run `!auth` again to retry.").queue();
                         return;
                     }
 
