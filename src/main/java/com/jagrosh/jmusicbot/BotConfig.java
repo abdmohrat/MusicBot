@@ -48,6 +48,7 @@ public class BotConfig
     private boolean stayInChannel, songInGame, npImages, updatealerts, useEval, dbots;
     private boolean youtubeOauthEnabled;
     private String youtubeOauthRefreshToken;
+    private String youtubeRemoteCipherUrl, youtubeRemoteCipherPassword, youtubeRemoteCipherUserAgent;
     private long owner, maxSeconds, aloneTimeUntilStop;
     private int maxYTPlaylistPages;
     private double skipratio;
@@ -95,6 +96,9 @@ public class BotConfig
             updatealerts = config.getBoolean("updatealerts");
             youtubeOauthEnabled = config.getBoolean("youtube.oauth2.enabled");
             youtubeOauthRefreshToken = config.getString("youtube.oauth2.refreshToken");
+            youtubeRemoteCipherUrl = config.getString("youtube.remoteCipher.url");
+            youtubeRemoteCipherPassword = config.getString("youtube.remoteCipher.password");
+            youtubeRemoteCipherUserAgent = config.getString("youtube.remoteCipher.userAgent");
             logLevel = config.getString("loglevel");
             useEval = config.getBoolean("eval");
             evalEngine = config.getString("evalengine");
@@ -335,6 +339,29 @@ public class BotConfig
     public String getYoutubeOauth2RefreshToken()
     {
         return youtubeOauthRefreshToken;
+    }
+
+    public boolean useYoutubeRemoteCipher()
+    {
+        return youtubeRemoteCipherUrl != null
+                && !youtubeRemoteCipherUrl.trim().isEmpty()
+                && youtubeRemoteCipherPassword != null
+                && !youtubeRemoteCipherPassword.trim().isEmpty();
+    }
+
+    public String getYoutubeRemoteCipherUrl()
+    {
+        return youtubeRemoteCipherUrl;
+    }
+
+    public String getYoutubeRemoteCipherPassword()
+    {
+        return youtubeRemoteCipherPassword;
+    }
+
+    public String getYoutubeRemoteCipherUserAgent()
+    {
+        return youtubeRemoteCipherUserAgent;
     }
 
     public synchronized void persistYoutubeOauth2RefreshToken(String refreshToken) throws IOException

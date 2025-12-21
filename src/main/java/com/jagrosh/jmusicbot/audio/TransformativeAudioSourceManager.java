@@ -20,6 +20,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.typesafe.config.Config;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.YoutubeSourceOptions;
 import dev.lavalink.youtube.clients.AndroidVr;
 import dev.lavalink.youtube.clients.Music;
 import dev.lavalink.youtube.clients.Tv;
@@ -44,14 +45,14 @@ public class TransformativeAudioSourceManager extends YoutubeAudioSourceManager
     private final static Logger log = LoggerFactory.getLogger(TransformativeAudioSourceManager.class);
     private final String name, regex, replacement, selector, format;
     
-    public TransformativeAudioSourceManager(String name, Config object)
+    public TransformativeAudioSourceManager(String name, Config object, YoutubeSourceOptions ytOptions)
     {
-        this(name, object.getString("regex"), object.getString("replacement"), object.getString("selector"), object.getString("format"));
+        this(name, ytOptions, object.getString("regex"), object.getString("replacement"), object.getString("selector"), object.getString("format"));
     }
     
-    public TransformativeAudioSourceManager(String name, String regex, String replacement, String selector, String format)
+    public TransformativeAudioSourceManager(String name, YoutubeSourceOptions ytOptions, String regex, String replacement, String selector, String format)
     {
-        super(true,
+        super(ytOptions,
                 new Music(),
                 new AndroidVr(),
                 new Web(),
@@ -99,12 +100,12 @@ public class TransformativeAudioSourceManager extends YoutubeAudioSourceManager
         return null;
     }
     
-    public static List<TransformativeAudioSourceManager> createTransforms(Config transforms)
+    public static List<TransformativeAudioSourceManager> createTransforms(Config transforms, YoutubeSourceOptions ytOptions)
     {
         try
         {
             return transforms.root().entrySet().stream()
-                    .map(e -> new TransformativeAudioSourceManager(e.getKey(), transforms.getConfig(e.getKey())))
+                    .map(e -> new TransformativeAudioSourceManager(e.getKey(), transforms.getConfig(e.getKey()), ytOptions))
                     .collect(Collectors.toList());
         }
         catch (Exception ex)

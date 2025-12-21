@@ -40,6 +40,16 @@ Some YouTube / YouTube Music tracks are age-restricted and won't play without au
   - `youtube.oauth2.enabled = true`
   - `youtube.oauth2.refreshToken = "<token>"`
 
+### YouTube "sig function" errors (optional)
+
+If you see errors like `Must find sig function`, YouTube changed their player script and local deciphering broke.
+
+- Run a remote cipher server (see https://github.com/lavalink-devs/youtube-source#remote-cipher)
+- Configure in `config.txt`:
+  - `youtube.remoteCipher.url`
+  - `youtube.remoteCipher.password`
+  - `youtube.remoteCipher.userAgent`
+
 ## 5) Run
 
 From the folder with the jar:
