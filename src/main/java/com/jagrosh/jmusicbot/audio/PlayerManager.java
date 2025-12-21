@@ -30,6 +30,11 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.AndroidVr;
+import dev.lavalink.youtube.clients.Music;
+import dev.lavalink.youtube.clients.Tv;
+import dev.lavalink.youtube.clients.Web;
+import dev.lavalink.youtube.clients.WebEmbedded;
 import net.dv8tion.jda.api.entities.Guild;
 
 /**
@@ -50,7 +55,14 @@ public class PlayerManager extends DefaultAudioPlayerManager
     {
         TransformativeAudioSourceManager.createTransforms(bot.getConfig().getTransforms()).forEach(t -> registerSourceManager(t));
 
-        youtube = new YoutubeAudioSourceManager(true);
+        // Include Tv client so OAuth2 can be used for age-restricted content.
+        youtube = new YoutubeAudioSourceManager(true,
+                new Music(),
+                new AndroidVr(),
+                new Web(),
+                new WebEmbedded(),
+                new Tv()
+        );
         youtube.setPlaylistPageCount(bot.getConfig().getMaxYTPlaylistPages());
         if(bot.getConfig().useYoutubeOauth2())
             youtube.useOauth2(bot.getConfig().getYoutubeOauth2RefreshToken(), true);

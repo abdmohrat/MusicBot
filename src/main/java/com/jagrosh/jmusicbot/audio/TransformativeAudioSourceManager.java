@@ -20,6 +20,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.typesafe.config.Config;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.AndroidVr;
+import dev.lavalink.youtube.clients.Music;
+import dev.lavalink.youtube.clients.Tv;
+import dev.lavalink.youtube.clients.Web;
+import dev.lavalink.youtube.clients.WebEmbedded;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +51,13 @@ public class TransformativeAudioSourceManager extends YoutubeAudioSourceManager
     
     public TransformativeAudioSourceManager(String name, String regex, String replacement, String selector, String format)
     {
+        super(true,
+                new Music(),
+                new AndroidVr(),
+                new Web(),
+                new WebEmbedded(),
+                new Tv()
+        );
         this.name = name;
         this.regex = regex;
         this.replacement = replacement;
