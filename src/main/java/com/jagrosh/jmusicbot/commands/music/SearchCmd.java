@@ -29,6 +29,7 @@ import com.jagrosh.jmusicbot.audio.AudioHandler;
 import com.jagrosh.jmusicbot.audio.QueuedTrack;
 import com.jagrosh.jmusicbot.commands.MusicCommand;
 import com.jagrosh.jmusicbot.utils.FormatUtil;
+import com.jagrosh.jmusicbot.utils.LoadErrorUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -167,6 +168,13 @@ public class SearchCmd extends MusicCommand
         @Override
         public void loadFailed(FriendlyException throwable) 
         {
+            if(LoadErrorUtil.isAgeRestricted(throwable) && !bot.getConfig().useYoutubeOauth2())
+            {
+                m.editMessage(FormatUtil.filter(event.getClient().getError()
+                        +" This video is age-restricted. Run `"+event.getClient().getPrefix()
+                        +"auth` (owner only) to link YouTube and retry.")).queue();
+                return;
+            }
             if(throwable.severity==Severity.COMMON)
                 m.editMessage(event.getClient().getError()+" Error loading: "+throwable.getMessage()).queue();
             else

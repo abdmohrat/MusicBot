@@ -22,6 +22,7 @@ import com.jagrosh.jmusicbot.audio.QueuedTrack;
 import com.jagrosh.jmusicbot.audio.RequestMetadata;
 import com.jagrosh.jmusicbot.commands.DJCommand;
 import com.jagrosh.jmusicbot.utils.FormatUtil;
+import com.jagrosh.jmusicbot.utils.LoadErrorUtil;
 import com.jagrosh.jmusicbot.utils.TimeUtil;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -122,6 +123,13 @@ public class PlaynextCmd extends DJCommand
         @Override
         public void loadFailed(FriendlyException throwable)
         {
+            if(LoadErrorUtil.isAgeRestricted(throwable) && !bot.getConfig().useYoutubeOauth2())
+            {
+                m.editMessage(FormatUtil.filter(event.getClient().getError()
+                        +" This video is age-restricted. Run `"+event.getClient().getPrefix()
+                        +"auth` (owner only) to link YouTube and retry.")).queue();
+                return;
+            }
             if(throwable.severity==FriendlyException.Severity.COMMON)
                 m.editMessage(event.getClient().getError()+" Error loading: "+throwable.getMessage()).queue();
             else
