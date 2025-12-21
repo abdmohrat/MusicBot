@@ -344,9 +344,7 @@ public class BotConfig
     public boolean useYoutubeRemoteCipher()
     {
         return youtubeRemoteCipherUrl != null
-                && !youtubeRemoteCipherUrl.trim().isEmpty()
-                && youtubeRemoteCipherPassword != null
-                && !youtubeRemoteCipherPassword.trim().isEmpty();
+                && !youtubeRemoteCipherUrl.trim().isEmpty();
     }
 
     public String getYoutubeRemoteCipherUrl()

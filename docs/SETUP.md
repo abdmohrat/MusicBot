@@ -44,7 +44,8 @@ Some YouTube / YouTube Music tracks are age-restricted and won't play without au
 
 If you see errors like `Must find sig function`, YouTube changed their player script and local deciphering broke.
 
-- Run a remote cipher server (see https://github.com/lavalink-devs/youtube-source#remote-cipher)
+- By default, the bot uses a public remote cipher service to avoid "sig function" breakage.
+- To self-host (recommended for reliability), run a remote cipher server (see https://github.com/lavalink-devs/youtube-source#remote-cipher)
 - Configure in `config.txt`:
   - `youtube.remoteCipher.url`
   - `youtube.remoteCipher.password`
